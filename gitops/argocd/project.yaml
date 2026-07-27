@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: ai-bankapp-devops
+  namespace: argocd
+spec:
+  description: AI-BankApp-DevOps three-tier banking application
+  sourceRepos:
+    - 'https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps.git'
+  destinations:
+    - namespace: ai-bankapp
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

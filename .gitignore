@@ -1,0 +1,30 @@
+# Java / Maven
+backend/target/
+*.class
+
+# Node
+frontend/node_modules/
+frontend/build/
+
+# Python
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/model.joblib
+ai-service/.pytest_cache/
+ai-service/.venv/
+*.pyc
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+
+# Env / secrets
+.env
+*.env.local
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

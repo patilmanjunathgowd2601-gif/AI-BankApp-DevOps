@@ -1,0 +1,106 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aibank-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aibankapp}
+      POSTGRES_USER: ${POSTGRES_USER:-bankapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bankapp_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-bankapp} -d $${POSTGRES_DB:-aibankapp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [aibank-net]
+
+  ai-service:
+    build: ./ai-service
+    container_name: aibank-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks: [aibank-net]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: aibank-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-aibankapp}
+      DB_USER: ${POSTGRES_USER:-bankapp}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-bankapp_pass}
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production-please-use-32-bytes-min}
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "8080:8080"
+    networks: [aibank-net]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    container_name: aibank-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      API_BASE_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+    networks: [aibank-net]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: aibank-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks: [aibank-net]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: aibank-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks: [aibank-net]
+
+networks:
+  aibank-net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  grafana-data:

@@ -1,0 +1,73 @@
+name: Security Scans (Secrets + SAST)
+
+# Repo-wide DevSecOps gate: runs on every push/PR regardless of which
+# service changed, since secret leaks and insecure code patterns aren't
+# scoped to a single service. Complements the per-service CI workflows
+# (backend-ci.yml / frontend-ci.yml / ai-service-ci.yml), which each run
+# OWASP Dependency-Check or npm audit / pip-audit plus a Trivy image scan.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gitleaks:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: Semgrep SAST scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: semgrep scan --config auto --error --exclude ai-service/venv --exclude frontend/node_modules
+
+  zap-dast:
+    name: OWASP ZAP dynamic scan (DAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot the full stack via Docker Compose
+        run: |
+          cp .env.example .env
+          docker compose up -d --build
+
+      - name: Wait for the frontend to become healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/health > /dev/null; then
+              echo "Frontend is up"
+              exit 0
+            fi
+            echo "Waiting for frontend... ($i/30)"
+            sleep 5
+          done
+          echo "Frontend never became healthy" >&2
+          docker compose logs
+          exit 1
+
+      - name: Run ZAP baseline scan against the running app
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'http://localhost:3000'
+          fail_action: false
+          cmd_options: '-a'
+
+      - name: Tear down the stack
+        if: always()
+        run: docker compose down -v

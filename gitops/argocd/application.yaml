@@ -1,0 +1,33 @@
+# App-of-Apps root Application: ArgoCD watches the k8s/ directory in this repo
+# and reconciles the live cluster state to match it automatically (GitOps pull
+# model) -- no manual `kubectl apply` needed after the initial bootstrap.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ai-bankapp-devops
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: ai-bankapp-devops
+  source:
+    repoURL: https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps.git
+    targetRevision: main
+    path: k8s
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai-bankapp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

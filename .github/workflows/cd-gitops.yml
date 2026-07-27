@@ -1,0 +1,38 @@
+name: CD - Update GitOps Manifests
+
+# After images are built and pushed by the CI workflows, this job bumps the
+# image tag in the k8s manifests to the new commit SHA and pushes that change
+# back to the repo. ArgoCD (configured in gitops/argocd) watches this repo and
+# automatically syncs the cluster to match -- this is the GitOps deployment loop.
+
+on:
+  workflow_run:
+    workflows: ["Backend CI", "Frontend CI", "AI Service CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  update-manifests:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update image tags to latest commit SHA
+        run: |
+          SHA=${{ github.event.workflow_run.head_sha }}
+          sed -i "s#ai-bankapp-backend:.*#ai-bankapp-backend:${SHA}#" k8s/backend/deployment.yaml
+          sed -i "s#ai-bankapp-frontend:.*#ai-bankapp-frontend:${SHA}#" k8s/frontend/deployment.yaml
+          sed -i "s#ai-bankapp-ai-service:.*#ai-bankapp-ai-service:${SHA}#" k8s/ai-service/deployment.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/
+          git diff --cached --quiet || git commit -m "chore(gitops): bump image tags to ${{ github.event.workflow_run.head_sha }}"
+          git push
