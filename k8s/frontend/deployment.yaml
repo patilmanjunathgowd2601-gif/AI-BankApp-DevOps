@@ -6,7 +6,9 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 2
+  # 1 replica to fit comfortably on resource-constrained local dev clusters;
+  # bump to 2+ on a cluster with real headroom.
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -24,6 +26,14 @@ spec:
           ports:
             - containerPort: 80
           env:
+            # Must be empty: the React app's api client does
+            # `baseURL + '/api/auth/login'` (the '/api/' prefix is already
+            # hardcoded in the component calls). Setting this to "/api" here
+            # produced a doubled "/api/api/auth/login" path that neither the
+            # ingress nor Spring's permitAll rule matched, surfacing as a
+            # confusing empty-body 403. Leaving it blank makes requests
+            # resolve relative to the current origin, which the ingress
+            # then correctly routes to the backend Service.
             - name: API_BASE_URL
               value: ""
           readinessProbe:

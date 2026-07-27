@@ -28,14 +28,28 @@ spec:
           envFrom:
             - configMapRef: { name: backend-config }
             - secretRef: { name: backend-secret }
+          # A cold Spring Boot start on modest hardware has been observed
+          # taking 60-100+ seconds in this project (JPA repo scanning,
+          # Hibernate bootstrap, HikariCP connecting, etc.). The old
+          # liveness probe (initialDelaySeconds: 40, periodSeconds: 20,
+          # default failureThreshold: 3) started killing the container
+          # around the 80s mark -- before it ever finished starting up,
+          # producing a permanent crash loop unrelated to actual load.
+          # startupProbe holds off readiness/liveness evaluation until the
+          # app answers once, with a much longer overall budget
+          # (30 * 10s = up to 300s) for that first success.
+          startupProbe:
+            httpGet: { path: /actuator/health, port: 8080 }
+            periodSeconds: 10
+            failureThreshold: 30
           readinessProbe:
             httpGet: { path: /actuator/health, port: 8080 }
-            initialDelaySeconds: 20
             periodSeconds: 10
+            failureThreshold: 3
           livenessProbe:
             httpGet: { path: /actuator/health, port: 8080 }
-            initialDelaySeconds: 40
             periodSeconds: 20
+            failureThreshold: 3
           resources:
             requests: { cpu: 200m, memory: 384Mi }
             limits: { cpu: 1, memory: 768Mi }

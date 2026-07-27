@@ -8,7 +8,10 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: backend
-  minReplicas: 2
+  # minReplicas is 1 to fit comfortably on resource-constrained local dev
+  # clusters (e.g. a kind cluster on an ~4GB WSL2 VM); on a real multi-node
+  # cluster with more headroom, bump this back to 2 for actual HA.
+  minReplicas: 1
   maxReplicas: 6
   metrics:
     - type: Resource

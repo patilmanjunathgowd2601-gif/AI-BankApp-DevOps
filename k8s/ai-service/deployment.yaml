@@ -6,7 +6,9 @@ metadata:
   labels:
     app: ai-service
 spec:
-  replicas: 2
+  # 1 replica to fit comfortably on resource-constrained local dev clusters;
+  # bump to 2+ on a cluster with real headroom.
+  replicas: 1
   selector:
     matchLabels:
       app: ai-service

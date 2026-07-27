@@ -4,7 +4,14 @@ metadata:
   name: prometheus
   namespace: ai-bankapp
 spec:
-  replicas: 1
+  # Paused (0) by default: on a resource-constrained local dev cluster,
+  # running the full monitoring stack alongside all app tiers causes real
+  # CPU/memory contention and crash-looping. Scale to 1 when you specifically
+  # want to demo monitoring: `kubectl scale deployment prometheus -n
+  # ai-bankapp --replicas=1` (consider scaling ai-service/frontend to 0 or 1
+  # first to make room). On a cluster with real headroom, just set this
+  # back to 1 permanently.
+  replicas: 0
   selector:
     matchLabels: { app: prometheus }
   template:

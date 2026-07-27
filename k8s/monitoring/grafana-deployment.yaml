@@ -4,7 +4,9 @@ metadata:
   name: grafana
   namespace: ai-bankapp
 spec:
-  replicas: 1
+  # Paused (0) by default -- see the matching comment in
+  # prometheus-deployment.yaml for why, and how to re-enable.
+  replicas: 0
   selector:
     matchLabels: { app: grafana }
   template:
