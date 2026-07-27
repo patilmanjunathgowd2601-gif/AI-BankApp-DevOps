@@ -14,9 +14,17 @@ spec:
       labels:
         app: postgres
     spec:
+      # The official postgres:16-alpine image already runs its entrypoint as
+      # the non-root "postgres" user (UID 999), so this doesn't change
+      # runtime behavior -- it just makes that guarantee explicit and
+      # enforced instead of implicit.
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: postgres
           image: postgres:16-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 5432
           envFrom:

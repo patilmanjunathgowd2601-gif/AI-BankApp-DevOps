@@ -33,6 +33,13 @@ jobs:
 
       - name: OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
+        # This is a Docker container action that bundles its own JDK. The
+        # setup-java step above exports JAVA_HOME pointing at the *runner's*
+        # JDK path, which doesn't exist inside the container -- causing
+        # "JAVA_HOME is not defined correctly" / "cannot execute .../bin/java".
+        # Blanking it here lets the container fall back to its own bundled JDK.
+        env:
+          JAVA_HOME: ''
         with:
           project: 'ai-bankapp-backend'
           path: 'backend'

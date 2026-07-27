@@ -15,8 +15,12 @@ spec:
       labels:
         app: backend
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: backend
+          securityContext:
+            allowPrivilegeEscalation: false
           # Locally-built image loaded into the kind cluster via
           # `kind load docker-image`. In the real CI/CD pipeline this would
           # instead point at ghcr.io/<owner>/ai-bankapp-backend:<sha>, bumped

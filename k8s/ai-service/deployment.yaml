@@ -17,12 +17,16 @@ spec:
       labels:
         app: ai-service
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: ai-service
           # See backend/deployment.yaml for why this uses the local
           # docker-compose image name instead of the ghcr.io production path.
           image: ai-bankapp-devops-ai-service:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 8000
           readinessProbe:

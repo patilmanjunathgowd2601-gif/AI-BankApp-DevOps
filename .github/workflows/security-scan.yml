@@ -67,6 +67,12 @@ jobs:
           target: 'http://localhost:3000'
           fail_action: false
           cmd_options: '-a'
+          # Without this, the action tries to file scan results as a GitHub
+          # issue, which needs `issues: write` permission our default
+          # GITHUB_TOKEN doesn't have -- failing with "Resource not
+          # accessible by integration" regardless of what ZAP actually found.
+          # The HTML/MD report artifact is enough for this pipeline.
+          allow_issue_writing: false
 
       - name: Tear down the stack
         if: always()

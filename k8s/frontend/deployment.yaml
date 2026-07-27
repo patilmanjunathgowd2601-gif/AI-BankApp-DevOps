@@ -17,14 +17,22 @@ spec:
       labels:
         app: frontend
     spec:
+      # Belt-and-suspenders with the container-level settings below: even if
+      # the image were somehow misconfigured, the kubelet refuses to run any
+      # container in this pod as UID 0.
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: frontend
           # See backend/deployment.yaml for why this uses the local
           # docker-compose image name instead of the ghcr.io production path.
           image: ai-bankapp-devops-frontend:latest
           imagePullPolicy: IfNotPresent
+          # nginx-unprivileged listens on 8080, not the usual 80 -- it can't
+          # bind < 1024 without root, which is exactly what runAsNonRoot
+          # above prevents.
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           env:
             # Must be empty: the React app's api client does
             # `baseURL + '/api/auth/login'` (the '/api/' prefix is already
@@ -36,8 +44,10 @@ spec:
             # then correctly routes to the backend Service.
             - name: API_BASE_URL
               value: ""
+          securityContext:
+            allowPrivilegeEscalation: false
           readinessProbe:
-            httpGet: { path: /health, port: 80 }
+            httpGet: { path: /health, port: 8080 }
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:

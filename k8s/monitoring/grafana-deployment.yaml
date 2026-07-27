@@ -13,9 +13,16 @@ spec:
     metadata:
       labels: { app: grafana }
     spec:
+      # grafana/grafana already runs as the "grafana" user (UID 472) by
+      # default; this makes it explicit/enforced rather than relying on the
+      # image.
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: grafana
           image: grafana/grafana:11.1.0
+          securityContext:
+            allowPrivilegeEscalation: false
           ports: [{ containerPort: 3000 }]
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
