@@ -28,6 +28,24 @@ spec:
         runAsUser: 999
         runAsGroup: 999
         fsGroup: 999
+      # fsGroup above only changes the volume's GROUP ownership; kind's
+      # default storage provisioner creates the underlying hostPath directory
+      # owned by root, and initdb needs to chmod/chown that directory itself
+      # -- an operation only the OWNER (or root) can do, regardless of the
+      # permission bits fsGroup sets. This one-shot init container runs as
+      # root (overriding the pod-level runAsNonRoot just for itself) purely
+      # to hand ownership to the postgres UID before the real container ever
+      # starts, so postgres itself still never runs as root.
+      initContainers:
+        - name: fix-data-dir-ownership
+          image: busybox:1.36
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data"]
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
           image: postgres:16-alpine

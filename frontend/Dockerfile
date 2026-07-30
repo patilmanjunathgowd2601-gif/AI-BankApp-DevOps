@@ -12,7 +12,12 @@ RUN npm run build
 # runAsNonRoot: true in Kubernetes without nginx needing root just to bind
 # port 80 (which would otherwise fail with "Permission denied").
 FROM nginxinc/nginx-unprivileged:1.27-alpine
-COPY --from=build /app/build /usr/share/nginx/html
+# --chown=101:101 matters here: COPY always sets root ownership regardless of
+# any earlier USER directive, and the container now runs as UID 101 at
+# runtime. Without this, docker-entrypoint.d/40-inject-env.sh can't write
+# env-config.js into this directory at startup ("Permission denied") even
+# though the process itself is correctly non-root.
+COPY --from=build --chown=101:101 /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.d/40-inject-env.sh
 USER root
