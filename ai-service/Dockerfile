@@ -12,8 +12,10 @@ COPY app/train_model.py ./train_model.py
 # transactions immediately on startup (no cold-start training needed).
 RUN python train_model.py
 
-RUN useradd --create-home appuser
-USER appuser
+# Numeric UID, not just a named user -- see the matching comment in
+# backend/Dockerfile for why this is required for runAsNonRoot: true to work.
+RUN useradd --create-home --uid 1000 appuser
+USER 1000
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s \

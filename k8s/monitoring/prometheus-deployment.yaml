@@ -18,10 +18,14 @@ spec:
     metadata:
       labels: { app: prometheus }
     spec:
-      # prom/prometheus already runs as "nobody" (UID 65534) by default;
-      # this makes it explicit/enforced rather than relying on the image.
+      # Pinning the numeric UID explicitly rather than trusting the image's
+      # declared default -- see the matching comment in
+      # k8s/postgres/statefulset.yaml for why this is necessary for
+      # runAsNonRoot: true to work at all with some official images.
       securityContext:
         runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
       containers:
         - name: prometheus
           image: prom/prometheus:v2.53.0

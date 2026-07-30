@@ -9,9 +9,15 @@ RUN mvn -B clean package -DskipTests
 # ---- Runtime stage ----
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
-RUN addgroup --system spring && adduser --system --ingroup spring spring
+# Explicit numeric UID/GID, not just a named user: Kubernetes' runAsNonRoot
+# check happens at pod admission, before the entrypoint runs, and it can only
+# verify "non-root" by reading the image's declared numeric user straight out
+# of the image config. A named user like "spring" can't be resolved without
+# executing code, so runAsNonRoot: true fails closed with "cannot verify user
+# is non-root" even though the user genuinely isn't root.
+RUN addgroup --system --gid 1000 spring && adduser --system --uid 1000 --ingroup spring spring
 COPY --from=build /app/target/ai-bankapp-backend.jar app.jar
-USER spring:spring
+USER 1000
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
   CMD wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"' || exit 1

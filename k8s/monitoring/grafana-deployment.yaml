@@ -13,11 +13,14 @@ spec:
     metadata:
       labels: { app: grafana }
     spec:
-      # grafana/grafana already runs as the "grafana" user (UID 472) by
-      # default; this makes it explicit/enforced rather than relying on the
-      # image.
+      # Pinning the numeric UID explicitly rather than trusting the image's
+      # declared default -- see the matching comment in
+      # k8s/postgres/statefulset.yaml for why this is necessary for
+      # runAsNonRoot: true to work at all with some official images.
       securityContext:
         runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
       containers:
         - name: grafana
           image: grafana/grafana:11.1.0

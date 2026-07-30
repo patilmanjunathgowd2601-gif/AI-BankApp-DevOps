@@ -14,12 +14,20 @@ spec:
       labels:
         app: postgres
     spec:
-      # The official postgres:16-alpine image already runs its entrypoint as
-      # the non-root "postgres" user (UID 999), so this doesn't change
-      # runtime behavior -- it just makes that guarantee explicit and
-      # enforced instead of implicit.
+      # The official postgres image actually declares ROOT as its default
+      # user -- it only drops to the unprivileged "postgres" user (fixed at
+      # UID/GID 999 in every official variant, specifically so this is
+      # predictable) internally via its entrypoint script after doing
+      # root-only setup. Kubernetes' runAsNonRoot check reads the image's
+      # declared default user before the entrypoint ever runs, so without an
+      # explicit runAsUser here it sees "root" and refuses to start the
+      # container at all ("image will run as root"). fsGroup makes sure the
+      # mounted PVC is group-writable by that same GID.
       securityContext:
         runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       containers:
         - name: postgres
           image: postgres:16-alpine
