@@ -36,7 +36,7 @@
              PolymorphicTypeValidator enabling arbitrary code execution) and
              the PostgreSQL JDBC driver (client-side DoS via malicious
              SCRAM-SHA-256 auth) bundled by 3.5.14's own dependency
-             management -- same override mechanism, different properties. -->
+             management; same override mechanism, different properties. -->
         <jackson-bom.version>2.21.4</jackson-bom.version>
         <postgresql.version>42.7.11</postgresql.version>
     </properties>
