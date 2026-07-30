@@ -1,7 +1,14 @@
 # fastapi 0.111.0 pulled in starlette 0.37.2, vulnerable to CVE-2024-47874
-# (DoS via multipart/form-data). 0.115.6 requires starlette>=0.40.0,<0.42.0,
-# which resolves past the fix.
-fastapi==0.115.6
+# (DoS via multipart/form-data). Pinning fastapi==0.115.6 fixed that one by
+# resolving starlette>=0.40.0,<0.42.0 -- but starlette 0.41.3 (what that range
+# resolved to) was later found vulnerable to three more CVEs (CVE-2025-62727,
+# CVE-2026-48818, CVE-2026-54283), all fixed only in starlette 1.3.1+.
+# Rather than chase another exact-version pin every time a new CVE lands,
+# use floors for both: pip will resolve whatever current fastapi release is
+# compatible with a starlette >=1.3.1 (newer fastapi releases dropped the
+# upper-bound constraint on starlette entirely).
+fastapi>=0.115.6
+starlette>=1.3.1
 uvicorn[standard]==0.30.1
 pydantic==2.7.4
 scikit-learn==1.5.0

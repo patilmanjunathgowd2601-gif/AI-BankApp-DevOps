@@ -7,6 +7,14 @@ on:
   pull_request:
     paths: ['frontend/**']
 
+# This repo's default GITHUB_TOKEN workflow permission is read-only (repo
+# Settings > Actions > General), so pushing a new GHCR package fails with
+# "denied: installation not allowed to Create organization package" unless a
+# workflow explicitly requests write access here.
+permissions:
+  contents: read
+  packages: write
+
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/ai-bankapp-frontend
 
@@ -55,7 +63,11 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Trivy container image scan
-        uses: aquasecurity/trivy-action@master
+        # Pinned to a release tag, not @master: Semgrep's CI supply-chain
+        # rule flags mutable branch references on third-party Actions (the
+        # same class of risk behind real incidents against trivy-action and
+        # kics-action).
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: table

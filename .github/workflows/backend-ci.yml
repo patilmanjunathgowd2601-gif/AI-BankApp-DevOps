@@ -7,6 +7,14 @@ on:
   pull_request:
     paths: ['backend/**']
 
+# This repo's default GITHUB_TOKEN workflow permission is read-only (repo
+# Settings > Actions > General), so pushing a new GHCR package fails with
+# "denied: installation not allowed to Create organization package" unless a
+# workflow explicitly requests write access here.
+permissions:
+  contents: read
+  packages: write
+
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/ai-bankapp-backend
 
@@ -31,15 +39,29 @@ jobs:
         working-directory: backend
         run: mvn -B clean package -DskipTests
 
+  dependency-check:
+    needs: build-test
+    runs-on: ubuntu-latest
+    # Deliberately its own job, not a step tacked onto build-test: this is a
+    # Docker container action that bundles its own JDK, but actions/setup-java
+    # in build-test exports JAVA_HOME (via $GITHUB_ENV) pointing at the
+    # *runner's* JDK path. Because GitHub Actions always forwards any in-scope
+    # env var to a container action via `docker run -e VARNAME` (using
+    # whatever value -- including an explicit empty string -- is currently
+    # set), that JAVA_HOME silently overrides the image's own correct
+    # built-in default rather than being ignored, breaking the container's
+    # own java lookup either way ("JAVA_HOME is not defined correctly").
+    # A separate job gets a clean environment with no such export, so the
+    # container just uses its own bundled JDK with no override needed.
+    steps:
+      - uses: actions/checkout@v4
+
       - name: OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
-        # This is a Docker container action that bundles its own JDK. The
-        # setup-java step above exports JAVA_HOME pointing at the *runner's*
-        # JDK path, which doesn't exist inside the container -- causing
-        # "JAVA_HOME is not defined correctly" / "cannot execute .../bin/java".
-        # Blanking it here lets the container fall back to its own bundled JDK.
-        env:
-          JAVA_HOME: ''
+        # Pinned to a release tag, not @main: Semgrep's CI supply-chain rule
+        # flags mutable branch references on third-party Actions (the same
+        # class of risk that led to real supply-chain incidents against
+        # trivy-action and kics-action).
+        uses: dependency-check/Dependency-Check_Action@1.1.0
         with:
           project: 'ai-bankapp-backend'
           path: 'backend'
@@ -55,7 +77,7 @@ jobs:
           path: reports
 
   build-image:
-    needs: build-test
+    needs: [build-test, dependency-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -70,7 +92,9 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Trivy container image scan
-        uses: aquasecurity/trivy-action@master
+        # Pinned to a release tag, not @master -- see the Dependency-Check
+        # comment above for why.
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: table

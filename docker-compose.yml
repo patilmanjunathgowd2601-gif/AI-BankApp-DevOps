@@ -5,6 +5,16 @@ services:
     image: postgres:16-alpine
     container_name: aibank-postgres
     restart: unless-stopped
+    # no-new-privileges blocks setuid/setgid privilege escalation; read_only
+    # locks the root filesystem so a compromised process can't drop/modify
+    # binaries. postgres only ever needs to write inside the data volume plus
+    # its runtime socket dir and scratch space, both covered by tmpfs below.
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql
+      - /tmp
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-aibankapp}
       POSTGRES_USER: ${POSTGRES_USER:-bankapp}
@@ -76,6 +86,14 @@ services:
     image: prom/prometheus:v2.53.0
     container_name: aibank-prometheus
     restart: unless-stopped
+    # See the matching comment on postgres above for why these are set.
+    # /prometheus (its TSDB storage path) isn't backed by a named volume here,
+    # so it's ephemeral -- acceptable for this local-dev/demo stack.
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
@@ -86,6 +104,12 @@ services:
     image: grafana/grafana:11.1.0
     container_name: aibank-grafana
     restart: unless-stopped
+    # See the matching comment on postgres above for why these are set.
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     volumes:
