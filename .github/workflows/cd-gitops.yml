@@ -3,7 +3,7 @@ name: CD - Update GitOps Manifests
 # After images are built and pushed by the CI workflows, this job bumps the
 # image tag in the k8s manifests to the new commit SHA and pushes that change
 # back to the repo. ArgoCD (configured in gitops/argocd) watches this repo and
-# automatically syncs the cluster to match -- this is the GitOps deployment loop.
+# automatically syncs the cluster to match — this is the GitOps deployment loop.
 
 on:
   workflow_run:
@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: main
 

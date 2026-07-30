@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.2</version>
+        <version>3.5.14</version>
         <relativePath/>
     </parent>
 
@@ -19,6 +19,18 @@
 
     <properties>
         <java.version>17</java.version>
+        <!-- Trivy flagged real CVEs in the versions of Tomcat, Spring
+             Security, and Spring Framework that 3.3.2 bundled (embedded
+             Tomcat RCE/DoS/auth-bypass CVEs, a Spring Security policy-bypass
+             CVE, a Spring Framework annotation-detection CVE). Bumping the
+             parent to the latest 3.5.x gets most of the way there; these
+             explicit overrides use Spring Boot's own documented mechanism
+             for pinning managed dependency versions, to guarantee we're at
+             or past every fixed version Trivy listed regardless of exactly
+             what the parent's own defaults resolve to. -->
+        <tomcat.version>10.1.55</tomcat.version>
+        <spring-security.version>6.5.9</spring-security.version>
+        <spring-framework.version>6.2.11</spring-framework.version>
     </properties>
 
     <dependencies>
@@ -67,6 +79,11 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
