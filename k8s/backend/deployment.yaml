@@ -55,5 +55,5 @@ spec:
             periodSeconds: 20
             failureThreshold: 3
           resources:
-            requests: { cpu: 200m, memory: 384Mi }
+            requests: { cpu: 300m, memory: 384Mi }
             limits: { cpu: 1, memory: 768Mi }

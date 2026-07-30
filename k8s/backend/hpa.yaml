@@ -12,11 +12,23 @@ spec:
   # clusters (e.g. a kind cluster on an ~4GB WSL2 VM); on a real multi-node
   # cluster with more headroom, bump this back to 2 for actual HA.
   minReplicas: 1
-  maxReplicas: 6
+  # Was 6 -- on this single-node kind cluster that let the backend alone
+  # claim up to 6 CPU cores (limits.cpu: 1 each), starving the control
+  # plane (kube-apiserver/etcd) and the ingress-nginx controller of CPU and
+  # causing both to fail health checks / crash-loop under sustained load.
+  # Capped to 3 so worst-case backend CPU stays bounded and leaves headroom
+  # for the rest of the stack.
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          # Was 70% of the 200m request (i.e. scaled up past ~140m/pod).
+          # Actual steady-state usage under light load runs 400-670m/pod --
+          # well above that threshold -- which was driving the HPA to max
+          # out replicas almost immediately. Raised to 150% (~300m/pod
+          # request-relative) so scale-up only kicks in under real
+          # sustained pressure, not routine JVM/actuator overhead.
+          averageUtilization: 150
