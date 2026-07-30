@@ -23,7 +23,7 @@ spec:
             allowPrivilegeEscalation: false
           # Locally-built image loaded into the kind cluster via
           # `kind load docker-image`. In the real CI/CD pipeline this would
-          # instead point at ghcr.io/<owner>/ai-bankapp-backend:eda2d0e8dbb830fecc59e85c65a15f29c06560d6
+          # instead point at ghcr.io/<owner>/ai-bankapp-backend:998be0e75ed34a8573545c029bd617db96361130
           # automatically by cd-gitops.yml after each successful build.
           image: ai-bankapp-devops-backend:latest
           imagePullPolicy: IfNotPresent
