@@ -93,7 +93,7 @@ services:
       - no-new-privileges:true
     read_only: true
     tmpfs:
-      - /prometheus
+      - /prometheus:uid=65534,gid=65534
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
