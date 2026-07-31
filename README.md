@@ -3,8 +3,9 @@
 [![Backend CI](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/frontend-ci.yml)
 [![AI Service CI](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/ai-service-ci.yml/badge.svg)](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/ai-service-ci.yml)
+[![Security Scans](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/security-scan.yml/badge.svg)](https://github.com/patilmanjunathgowd2601-gif/AI-BankApp-DevOps/actions/workflows/security-scan.yml)
 ![Java](https://img.shields.io/badge/Java-17-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
 ![React](https://img.shields.io/badge/React-18-blue)
 ![Python](https://img.shields.io/badge/Python-3.12-yellow)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
@@ -44,7 +45,7 @@ AI-tier outage never blocks legitimate banking traffic).
 | Layer | Technology |
 |---|---|
 | Presentation | React 18, nginx (production) |
-| Application | Java 17, Spring Boot 3.3, Spring Security (JWT) |
+| Application | Java 17, Spring Boot 3.5, Spring Security (JWT) |
 | Data | PostgreSQL 16 |
 | AI / Fraud detection | Python 3.12, FastAPI, scikit-learn (Isolation Forest) |
 | Containers | Docker, Docker Compose |
